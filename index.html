@@ -599,6 +599,48 @@ body{background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;f
   <button class="ats-run-btn" id="atsRunBtn" onclick="runATSAnalysis()">🔍 Analyze Resume ↔ Job Match</button>
   <div class="ats-loading" id="atsLoading"><div class="ats-loading-spinner"></div><p>Analyzing alignment across 10 key requirements...</p></div>
   <div class="ats-results" id="atsResults"></div>
+
+  <!-- GREYED OUT PREVIEW — visible before analysis runs -->
+  <div id="ats-preview" style="opacity:0.35;pointer-events:none;filter:blur(1px);margin-top:4px;">
+    <div class="score-banner">
+      <div class="score-card before"><div class="score-num">--%</div><div class="score-label">Current ATS Match</div></div>
+      <div class="score-card after"><div class="score-num">--%</div><div class="score-label">Projected After Optimization</div></div>
+    </div>
+    <div class="gonogo borderline" style="margin-bottom:24px;">
+      <div class="gonogo-badge">GO / NO GO</div>
+      <div class="gonogo-text">Your recommendation will appear here after the analysis runs — Go, No Go, or Borderline with a full explanation.</div>
+    </div>
+    <div class="results-section">
+      <div class="results-section-title">📋 Alignment — 10 Key Requirements</div>
+      <div style="overflow-x:auto;"><table class="ats-table">
+        <thead><tr><th>Requirement</th><th>Score</th><th>Assessment</th><th>Improvement</th></tr></thead>
+        <tbody>
+          ${[1,2,3].map(()=>`<tr><td style="background:#eee;border-radius:4px;height:14px;"></td><td><span class="score-pill score-3">?</span></td><td style="background:#eee;border-radius:4px;height:14px;"></td><td style="background:#eee;border-radius:4px;height:14px;"></td></tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>
+    <div class="results-section">
+      <div class="results-section-title">✏️ Suggested Resume Edits</div>
+      <div style="background:white;border:1.5px solid var(--border);border-radius:9px;padding:16px 18px;color:#bbb;font-size:13px;font-style:italic;">Specific resume edits tailored to this job will appear here.</div>
+    </div>
+    <div class="results-section">
+      <div class="results-section-title">🔑 ATS Keywords to Add</div>
+      <div class="keyword-chips">
+        <span class="keyword-chip">keyword</span>
+        <span class="keyword-chip">keyword</span>
+        <span class="keyword-chip">keyword</span>
+      </div>
+    </div>
+    <div style="background:var(--ink);border-radius:10px;padding:22px 24px;margin-top:8px;">
+      <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);margin-bottom:6px;">Your Decision</div>
+      <div style="font-size:13px;font-weight:300;color:#bbb;margin-bottom:16px;">After reviewing the analysis, make your call.</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:120px;background:var(--sage);color:white;border-radius:7px;padding:12px 20px;text-align:center;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">✅ GO — Add to Tracker</div>
+        <div style="flex:1;min-width:120px;background:var(--coral);color:white;border-radius:7px;padding:12px 20px;text-align:center;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">✉️ GO — Write Cover Letter</div>
+        <div style="flex:1;min-width:120px;background:#2A2520;color:#aaa;border:1.5px solid #444;border-radius:7px;padding:12px 20px;text-align:center;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">✕ NO GO — Next Job</div>
+      </div>
+    </div>
+  </div>
 </div>
 </div>
 
@@ -913,6 +955,9 @@ function renderResults(r) {
 
   const el=document.getElementById('atsResults');
   el.innerHTML=html; el.style.display='block';
+  // Hide the greyed preview now that real results are showing
+  const preview = document.getElementById('ats-preview');
+  if (preview) preview.style.display='none';
   el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function copyTrackerRow(enc){navigator.clipboard.writeText(decodeURIComponent(enc)).then(()=>{const el=document.getElementById('copyConfirm');el.style.display='inline';setTimeout(()=>el.style.display='none',2500);}).catch(()=>alert('Copy failed.'));}
@@ -933,11 +978,12 @@ function goToCoverLetter() {
 
 function goDecision(action) {
   if (action === 'nogo') {
-    // Clear everything and reset
     document.getElementById('jobDesc').value = '';
     document.getElementById('resumeText').value = '';
     document.getElementById('atsResults').style.display = 'none';
     document.getElementById('atsResults').innerHTML = '';
+    const preview = document.getElementById('ats-preview');
+    if (preview) { preview.style.display='block'; }
     window._lastAnalysis = null;
     window.scrollTo(0,0);
     return;
