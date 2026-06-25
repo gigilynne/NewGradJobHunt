@@ -885,6 +885,9 @@ async function runATSAnalysis() {
   try {
     const resp = await fetch('https://anthropic-proxy.gaddie614.workers.dev',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,messages:[{role:'user',content:prompt}]})});
     const data = await resp.json();
+    if (!data.content) {
+      throw new Error('API error: ' + JSON.stringify(data));
+    }
     const text = data.content.map(i=>i.text||'').join('').trim().replace(/```json|```/g,'').trim();
     renderResults(JSON.parse(text));
   } catch(err) {
@@ -1042,6 +1045,7 @@ async function generateCoverLetter(){
   try{
     const resp=await fetch('https://anthropic-proxy.gaddie614.workers.dev',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
     const data=await resp.json();
+    if (!data.content) throw new Error('API error: ' + JSON.stringify(data));
     const letter=data.content.map(i=>i.text||'').join('').trim();
     document.getElementById('clEditor').value=letter;
     document.getElementById('clEditorWrap').style.display='block';
