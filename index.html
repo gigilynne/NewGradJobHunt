@@ -315,6 +315,7 @@ body{background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;f
   <button class="top-tab active" onclick="switchTopTab('plan',this)">📋 The Plan</button>
   <button class="top-tab" onclick="switchTopTab('ats',this)">🔍 Resume Analyzer</button>
   <button class="top-tab" onclick="switchTopTab('cl',this)">✉️ Cover Letter</button>
+  <button class="top-tab" onclick="switchTopTab('journal',this)">📓 Progress Journal</button>
 </div>
 
 <!-- ==================== PLAN TAB ==================== -->
@@ -672,7 +673,143 @@ body{background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;f
 </div>
 </div>
 
+<!-- ==================== PROGRESS JOURNAL TAB ==================== -->
+<div id="top-journal" class="top-panel">
+<div class="ats-page">
+  <div class="ats-header">
+    <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--sage);margin-bottom:8px;">Weekly Check-In · Progress Log</div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:clamp(1.6rem,5vw,2.6rem);font-weight:800;line-height:1.1;letter-spacing:-0.02em;">Progress <span style="color:var(--sage);">Journal</span></h1>
+    <p style="margin-top:10px;color:var(--slate);font-weight:300;font-style:italic;max-width:540px;">A running log of weekly check-ins — Hannah's notes and Mom's feedback in one place, organized by date.</p>
+  </div>
+
+  <!-- ADD NEW ENTRY -->
+  <div style="background:white;border:2px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:28px;">
+    <div style="background:var(--ink);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <h3 style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:white;">+ New Check-In Entry</h3>
+      <button onclick="toggleJournalForm()" id="journalFormToggle" style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;background:var(--sage);color:white;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;">Add Entry</button>
+    </div>
+    <div id="journalForm" style="display:none;padding:20px 24px;background:var(--cream);">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--slate);">Week / Date</label>
+          <input class="form-input" type="date" id="journal-date">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--slate);">Week Label (optional)</label>
+          <input class="form-input" id="journal-label" placeholder="e.g. Week 2, Check-in #3">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#3a7a3d;">Hannah's Progress Notes</label>
+          <textarea class="form-input" id="journal-hers" rows="5" style="resize:vertical;line-height:1.6;" placeholder="What did you accomplish this week? What felt hard? What are you proud of?"></textarea>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#8a6515;">Mom's Feedback</label>
+          <textarea class="form-input" id="journal-moms" rows="5" style="resize:vertical;line-height:1.6;" placeholder="Observations, encouragement, next steps, things to work on..."></textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="saveJournalEntry()" style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;background:var(--sage);color:white;border:none;padding:8px 18px;border-radius:5px;cursor:pointer;">Save Entry</button>
+        <button onclick="toggleJournalForm()" style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;background:white;color:var(--slate);border:1.5px solid var(--border);padding:8px 14px;border-radius:5px;cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOURNAL ENTRIES -->
+  <div id="journalEntries"></div>
+
+</div>
+</div>
+
 <script>
+// ===== PROGRESS JOURNAL =====
+let journalEntries = [];
+
+function toggleJournalForm() {
+  const form = document.getElementById('journalForm');
+  const btn = document.getElementById('journalFormToggle');
+  const isOpen = form.style.display !== 'none';
+  form.style.display = isOpen ? 'none' : 'block';
+  btn.textContent = isOpen ? 'Add Entry' : 'Cancel';
+  if (!isOpen) {
+    document.getElementById('journal-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('journal-label').value = '';
+    document.getElementById('journal-hers').value = '';
+    document.getElementById('journal-moms').value = '';
+  }
+}
+
+function saveJournalEntry() {
+  const date = document.getElementById('journal-date').value;
+  const label = document.getElementById('journal-label').value.trim();
+  const hers = document.getElementById('journal-hers').value.trim();
+  const moms = document.getElementById('journal-moms').value.trim();
+  if (!date && !hers && !moms) { alert('Please add a date and at least one note.'); return; }
+  journalEntries.unshift({ date, label, hers, moms, savedAt: new Date().toISOString() });
+  saveJournal();
+  renderJournal();
+  toggleJournalForm();
+}
+
+function deleteJournalEntry(idx) {
+  if (!confirm('Delete this journal entry?')) return;
+  journalEntries.splice(idx, 1);
+  saveJournal();
+  renderJournal();
+}
+
+function saveJournal() {
+  try { localStorage.setItem('jh_journal', JSON.stringify(journalEntries)); } catch(e) {}
+}
+
+function loadJournal() {
+  try { journalEntries = JSON.parse(localStorage.getItem('jh_journal') || '[]'); } catch(e) { journalEntries = []; }
+  // Pre-load first entry if journal is empty
+  if (journalEntries.length === 0) {
+    journalEntries = [{
+      date: '2026-06-23',
+      label: 'Week 1.5 — First Check-In',
+      hers: '',
+      moms: 'Phase 1: Great job getting Phase 1 done — LinkedIn looks nicely polished and the job alerts are set up. Now\'s a great time to continue to brush up on skills available through LinkedIn Learning or edX — nothing crazy, but things you can add to your LinkedIn to signal to connections and recruiters that you are remaining sharp. Let\'s talk through specifics.\n\nPhase 2: You applied to 6 jobs in 2 days which is great momentum! Going forward let\'s keep it to Tuesday and Thursday apply days so it stays sustainable and keep up the pace to build your pipeline. Let\'s work together to refine your resume and make sure the tools work. A few things to discuss: the Amazon role will likely have a long timeline, and be sure to start logging follow-up dates for everything — use your phone reminder as a tool to help (it\'s a great way to keep stress off of you).\n\nPhase 3: You\'ve done a great job kicking off networking — keep up the great work here. Build on your momentum by sending two more connections this week. When you can, connect with people you come across at companies you apply to.',
+      savedAt: new Date().toISOString()
+    }];
+    saveJournal();
+  }
+  renderJournal();
+}
+
+function renderJournal() {
+  const el = document.getElementById('journalEntries');
+  if (!el) return;
+  if (journalEntries.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:48px;color:var(--slate);font-style:italic;font-size:13px;">No entries yet — add your first check-in above.</div>';
+    return;
+  }
+  el.innerHTML = journalEntries.map((e, i) => {
+    const dateStr = e.date ? new Date(e.date + 'T12:00:00').toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'}) : '';
+    return `<div style="background:white;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">
+      <div style="background:var(--cream);border-bottom:2px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--ink);">${e.label || dateStr}</span>
+          ${e.label ? `<span style="font-size:11px;color:var(--slate);font-weight:300;">${dateStr}</span>` : ''}
+        </div>
+        <button onclick="deleteJournalEntry(${i})" style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;background:none;border:1.5px solid var(--border);color:#ccc;padding:4px 10px;border-radius:4px;cursor:pointer;">Remove</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+        <div style="padding:18px 20px;border-right:1.5px solid var(--border);">
+          <div style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#3a7a3d;margin-bottom:10px;">Hannah's Progress Notes</div>
+          ${e.hers ? `<div style="font-size:13px;font-weight:300;color:var(--slate);line-height:1.7;white-space:pre-wrap;">${e.hers}</div>` : '<div style="font-size:12px;color:#ccc;font-style:italic;">No notes added yet.</div>'}
+        </div>
+        <div style="padding:18px 20px;">
+          <div style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#8a6515;margin-bottom:10px;">Mom\'s Feedback</div>
+          ${e.moms ? `<div style="font-size:13px;font-weight:300;color:var(--slate);line-height:1.7;white-space:pre-wrap;">${e.moms}</div>` : '<div style="font-size:12px;color:#ccc;font-style:italic;">No feedback added yet.</div>'}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 // ===== TABS =====
 function switchTopTab(id, btn) {
   document.querySelectorAll('.top-panel').forEach(p => p.classList.remove('active'));
@@ -720,7 +857,7 @@ function exportProgress() {
   document.querySelectorAll('.task[data-id]').forEach(t => { state[t.dataset.id] = t.querySelector('.task-check').classList.contains('checked'); });
   const notes = getAllNotes();
   const jobs = getJobs();
-  const data = { progress: state, notes, jobs, exportedAt: new Date().toISOString() };
+  const data = { progress: state, notes, jobs, journal: journalEntries, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='job-hunt-progress-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
@@ -739,6 +876,7 @@ function importProgress(event) {
       });
       if (data.notes) setAllNotes(data.notes);
       if (data.jobs) { jobEntries = data.jobs; renderAllTrackers(); }
+      if (data.journal) { journalEntries = data.journal; saveJournal(); renderJournal(); }
       saveProgress(); updateProgress();
       alert('Progress imported!');
     } catch(err) { alert('Could not read file.'); }
@@ -1074,7 +1212,61 @@ function downloadCoverLetterPDF(){
   win.document.close();
 }
 
-window.onload=()=>{ loadProgress(); loadNotes(); loadJobs(); };
+window.onload=()=>{
+  // ===== HANNAH'S PRE-LOADED PROGRESS =====
+  const hannahProgress = {
+    "t1":true,"t2":true,"t3":true,"t4b":true,"t4":true,
+    "t5":true,"t6":true,"t_apply_week":true,
+    "t_followup_week":false,"t8":false,"t9":false,
+    "t_connect_week":false,"t10":false,"t12":false,"t13":false,
+    "t16":false,"t17":false,"t18":false,"t20":false,
+    "t_interview_week":false,"t14":false,"t15":false
+  };
+
+  // ===== HANNAH'S JOB APPLICATIONS =====
+  const hannahJobs = [
+    {"company":"FDM Group","role":"Junior Software Engineering Consultant","dateApplied":"2026-06-17","status":"Applied","contact":"","followUpDate":"2026-06-27","notes":"Handshake"},
+    {"company":"Meristem Packaging Company","role":"Junior Pricing Analyst (Entry-Level)","dateApplied":"2026-06-17","status":"Applied","contact":"","followUpDate":"2026-06-27","notes":""},
+    {"company":"Allyis","role":"Data Analyst","dateApplied":"2026-06-17","status":"Applied","contact":"","followUpDate":"2026-06-27","notes":""},
+    {"company":"Emonics LLC","role":"Entry Level Data Analyst","dateApplied":"2026-06-17","status":"Applied","contact":"","followUpDate":"2026-06-27","notes":""},
+    {"company":"Comfrt","role":"Digital Data Analyst","dateApplied":"2026-06-17","status":"Applied","contact":"","followUpDate":"2026-06-27","notes":""},
+    {"company":"Amazon","role":"Data & Reporting Analyst, Relay Operations Center Tech & Ops Integration","dateApplied":"2026-06-18","status":"Applied","contact":"","followUpDate":"2026-06-28","notes":"Large company — expect longer timeline"}
+  ];
+
+  // ===== MOM'S FEEDBACK PROMPTS =====
+  const momFeedback = {
+    "p1-moms": "Great job getting Phase 1 done — LinkedIn looks nicely polished and the job alerts are set up. Now's a great time to continue to brush up on skills available through LinkedIn Learning or edX — nothing crazy, but things you can add to your LinkedIn to signal to connections and recruiters that you are remaining sharp. Let's talk through specifics.",
+    "p2-moms": "You applied to 6 jobs in 2 days which is great momentum! Going forward let's keep it to Tuesday and Thursday apply days so it stays sustainable and keep up the pace to build your pipeline. Let's work together to refine your resume and make sure the tools work. A few things to discuss: the Amazon role will likely have a long timeline, and be sure to start logging follow-up dates for everything — use your phone reminder as a tool to help (it's a great way to keep stress off of you).",
+    "p3-moms": "You've done a great job kicking off networking — keep up the great work here. Build on your momentum by sending two more connections this week. When you can, connect with people you come across at companies you apply to.",
+    "p4-moms": "✏️ Add your Phase 4 feedback here before sending.",
+    "p5-moms": "✏️ Add your Phase 5 feedback here before sending.",
+    "pahead-moms": "✏️ Add your Looking Ahead feedback here before sending."
+  };
+
+  // Apply progress
+  const savedProgress = JSON.parse(localStorage.getItem('jh_progress')||'{}');
+  const progress = Object.keys(savedProgress).length > 0 ? savedProgress : hannahProgress;
+  document.querySelectorAll('.task[data-id]').forEach(t => {
+    if (progress[t.dataset.id]) { t.querySelector('.task-check').classList.add('checked'); t.classList.add('done'); }
+  });
+  updateProgress();
+  try { localStorage.setItem('jh_progress', JSON.stringify(progress)); } catch(e) {}
+
+  // Apply jobs
+  const savedJobs = JSON.parse(localStorage.getItem('jh_jobs')||'[]');
+  jobEntries = savedJobs.length > 0 ? savedJobs : hannahJobs;
+  try { localStorage.setItem('jh_jobs', JSON.stringify(jobEntries)); } catch(e) {}
+  renderAllTrackers();
+
+  // Apply notes — merge mom prompts with any saved notes
+  const savedNotes = JSON.parse(localStorage.getItem('jh_notes')||'{}');
+  const mergedNotes = Object.assign({}, momFeedback, savedNotes);
+  Object.keys(mergedNotes).forEach(k => { const el=document.getElementById('notes-'+k); if(el) el.value=mergedNotes[k]; });
+  try { localStorage.setItem('jh_notes', JSON.stringify(mergedNotes)); } catch(e) {}
+
+  // Load journal
+  loadJournal();
+};
 </script>
 </body>
 </html>
